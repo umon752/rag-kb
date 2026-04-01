@@ -1,0 +1,21 @@
+{
+  "name": "rag-kb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/umon752/rag-kb.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/umon752/rag-kb/issues"
+  },
+  "homepage": "https://github.com/umon752/rag-kb#readme"
+}
