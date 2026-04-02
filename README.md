@@ -50,13 +50,21 @@ rag-kb/
 ### ✅ Phase 3 — Ingestion Pipeline（已完成）
 - Step 8：文件切塊（`@langchain/textsplitters`）→ embed → 先刪後寫 → 存 Supabase
 
-### 🔄 Phase 4 — Webhook 自動同步（進行中）
+### ✅ Phase 4 — Webhook 自動同步（已完成）
 - Step 9：Cron 排程同步（HackMD 每天凌晨 0 點、GitHub 每天凌晨 2 點）
   - ✅ 9-1：安裝 `@nestjs/schedule`
   - ✅ 9-2：SyncService（含 `lastChangedAt` diff 檢查、Repo `pushed_at` diff 檢查）
   - ✅ 9-3：補充 `supabase.service.ts`（`writeSyncLog`、`getLastSyncedAt`、`getLastSuccessSyncAt`）
-  - ⬜ 9-4：建立 `sync.module.ts`（**目前進度到這裡**）
-  - ⬜ Step 10：GitHub Webhook Handler（即時同步）
+  - ✅ 9-4：建立 `sync.module.ts`
+- Step 10：GitHub Webhook Handler（即時同步）
+  - ✅ 10-1：`ingestAllGithubRepo()` 加入 `ingestion.service.ts`
+  - ✅ 10-2：建立 `sync.controller.ts`（Webhook + `POST /sync`）
+  - ✅ 10-3：`ingestGithubFile()`、`deleteGithubFile()` 加入 `ingestion.service.ts`
+  - ✅ 10-4：更新 `sync.module.ts` 加入 SyncController
+  - ✅ 10-5：更新 `app.module.ts` 加入 ScheduleModule + SyncModule
+  - ✅ 10-6：`.env` 加入 `GITHUB_WEBHOOK_SECRET`
+  - ⬜ 10-7：GitHub Webhook 設定（待部署後設定）
+  - ✅ 10-8：驗證 `POST /sync` 正常回傳（**目前進度到這裡**）
 
 ### ⬜ Phase 5 — RAG Agent + `/ask` API（待開始）
 - Step 11：Agent Module（向量搜尋 + GPT-4o-mini 生成回答）
