@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -25,8 +25,7 @@ type TSearchResult = {
 // NestJS 會自動幫你建立並管理這個 class 的實例，不需要手動 new SupabaseService()
 @Injectable()
 export class SupabaseService {
-  // 宣告一個私有變數存放 Supabase client 實例
-  // private 代表只有這個 class 內部可以使用
+  private readonly logger = new Logger(SupabaseService.name);
   private client: SupabaseClient;
 
   // constructor 是 class 初始化時自動執行的方法
@@ -72,13 +71,62 @@ export class SupabaseService {
   }
 
   // 刪除指定來源的所有 chunk（文章更新時先清除舊資料）
-  async deleteDocumentsBySource(sourceType: string, sourceId: string): Promise<void> {
+  async deleteDocumentsBySource(
+    sourceType: string,
+    sourceId: string,
+  ): Promise<void> {
     const { error } = await this.client
       .from('documents')
       .delete()
-      .match({ source_type: sourceType, source_id: sourceId })
-      // .match() 是指定條件，等同於 WHERE source_type = ? AND source_id = ?
+      .match({ source_type: sourceType, source_id: sourceId });
+    // .match() 是指定條件，等同於 WHERE source_type = ? AND source_id = ?
 
-    if (error) throw new Error(`deleteDocumentsBySource failed: ${error.message}`)
+    if (error)
+      throw new Error(`deleteDocumentsBySource failed: ${error.message}`);
+  }
+
+  // 寫入同步紀錄
+  async writeSyncLog(
+    source: string,
+    status: 'success' | 'error',
+    meta?: unknown,
+  ): Promise<void> {
+    const { error } = await this.client.from('sync_logs').insert({
+      source,
+      status,
+      meta: meta ?? {},
+      synced_at: new Date().toISOString(),
+    });
+    if (error) this.logger.error(`writeSyncLog failed: ${error.message}`);
+  }
+
+  // 查詢指定來源文件的上次同步時間（用於 diff 檢查，避免重複 embed）
+  async getLastSyncedAt(
+    sourceType: string,
+    sourceId: string,
+  ): Promise<string | undefined> {
+    const { data } = await this.client
+      .from('documents')
+      .select('updated_at')
+      .match({ source_type: sourceType, source_id: sourceId })
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    return data?.updated_at ?? undefined;
+  }
+
+  // 查詢 sync_logs 中指定來源的上次成功同步時間（給 GitHub repo diff 用）
+  async getLastSuccessSyncAt(source: string): Promise<string | undefined> {
+    const { data } = await this.client
+      .from('sync_logs')
+      .select('synced_at')
+      .eq('source', `github-repo:${source}`) // 用 source 名稱區分不同 repo
+      .eq('status', 'success')
+      .order('synced_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    return data?.synced_at ?? undefined;
   }
 }

@@ -129,12 +129,11 @@ create table documents (
 
 -- 同步記錄表
 create table sync_logs (
-  id uuid primary key default gen_random_uuid(), -- 唯一識別碼（自動產生）
-  source_type text not null,                     -- 來源類型（'hackmd' 或 'github'）
-  source_id text,                                -- 來源識別碼（可為空，代表全量同步）
-  status text not null,                          -- 同步結果（'success' 或 'error'）
-  message text,                                  -- 錯誤訊息或備註
-  synced_at timestamptz default now()            -- 同步時間
+  id uuid primary key default gen_random_uuid(),   -- 唯一識別碼（自動產生）
+  source text not null,                             -- 來源名稱（'hackmd', 'github', 'github-repo:repo-name', 'all'）
+  status text not null,                             -- 同步結果（'success' 或 'error'）
+  meta jsonb,                                       -- 額外資訊（同步結果統計、錯誤訊息等）
+  synced_at timestamptz default now()               -- 同步時間
 );
 
 -- 相似度搜尋 function
@@ -199,10 +198,10 @@ HACKMD_API_TOKEN=
 
 # GitHub
 GITHUB_TOKEN=
-GITHUB_REPOS=owner/repo1,owner/repo2
+GITHUB_OWNER=          # 你的 GitHub 帳號名稱
+GITHUB_TOPIC=rag-kb    # 只同步有此 topic 標籤的 repo
 
 # Webhook 安全
-HACKMD_WEBHOOK_SECRET=
 GITHUB_WEBHOOK_SECRET=
 
 # Backend
@@ -291,7 +290,7 @@ mkdir -p src/modules/supabase
 #### 4-3. 建立 `src/modules/supabase/supabase.service.ts`
 
 ```ts
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
@@ -318,8 +317,7 @@ type TSearchResult = {
 // NestJS 會自動幫你建立並管理這個 class 的實例，不需要手動 new SupabaseService()
 @Injectable()
 export class SupabaseService {
-  // 宣告一個私有變數存放 Supabase client 實例
-  // private 代表只有這個 class 內部可以使用
+  private readonly logger = new Logger(SupabaseService.name);
   private client: SupabaseClient;
 
   // constructor 是 class 初始化時自動執行的方法
