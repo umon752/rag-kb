@@ -7,6 +7,7 @@ import { EmbeddingModule } from './modules/embedding/embedding.module';
 import { HackmdModule } from './modules/sources/hackmd/hackmd.module';
 import { GithubModule } from './modules/sources/github/github.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
+import { SyncModule } from './modules/sync/sync.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { IngestionModule } from './modules/ingestion/ingestion.module';
     HackmdModule, // HackMD 資料來源模組
     GithubModule, // GitHub 資料來源模組
     IngestionModule, // 文件 ingestion pipeline 模組
+    SyncModule, // Webhook + 排程同步模組
   ],
   controllers: [AppController],
   providers: [AppService],
